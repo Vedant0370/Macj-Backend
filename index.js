@@ -12,6 +12,7 @@ const response = require("./utils/response");
 //models imports
 const Template = require("./model/TempModel");
 const inspection = require("./model/InspectionModel");
+const uploadedFile = require("./model/FileUploadhzf")
 
 //routes imports 
 const uploadRoutes = require("./routes/TemplateRoutes");
@@ -51,6 +52,31 @@ apiRouter.use("/executive", ExecutiveRoutes);
 // Serve static files from the uploads directory
 app.use("/public/uploads", express.static(path.join(__dirname, "public/uploads")));
 
+app.get('/api/hzf', async (req, res) => {
+  try {
+      const getHzf = await uploadedFile.find();
+      res.status(200).json(getHzf);
+  } catch (error) {
+      console.error('Error fetching files:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/api/hzf/upload', upload.single('file'), async (req, res) => {
+  try {
+      const fileUrl = `http://localhost:7000/public/uploads/${req.file.filename}`;
+
+      const newFile = new uploadedFile({
+          file: fileUrl
+      });
+
+      await newFile.save();
+      res.status(201).send({ message: 'File uploaded successfully', file: newFile });
+  } catch (error) {
+      console.error('Error uploading file:', error);
+      res.status(500).send({ message: 'Server error' });
+  }
+});
 app.post("/api/template/upload", upload.fields([{ name: "pdf" }]), async (req, res) => {
   try {
     // Multer middleware will handle file upload and store it in req.file
@@ -157,5 +183,5 @@ app.use("/api", apiRouter);
 
 //start server 
 app.listen(PORT, () => {
-  console.log(`Server is running on ${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
